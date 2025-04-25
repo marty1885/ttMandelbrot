@@ -62,3 +62,9 @@ target_link_libraries(tt_single_core
     ttmetal
     stbi_write
 )
+
+add_executable(tt_single_core_nullary single_core_nullary/tt_single_core_nullary.cpp)
+target_link_libraries(tt_single_core_nullary
+    ttmetal
+    stbi_write
+)

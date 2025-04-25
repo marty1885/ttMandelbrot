@@ -47,11 +47,6 @@ CBHandle MakeCircularBufferFP32(Program& program, const CoreSpec& core, tt::CBIn
     return MakeCircularBuffer(program, core, cb, n_tiles * tile_size, tile_size, tt::DataFormat::Float32);
 }
 
-CBHandle MakeCircularBufferINT32(Program& program, const CoreSpec& core, tt::CBIndex cb, uint32_t n_tiles) {
-    constexpr uint32_t tile_size = sizeof(float) * TILE_WIDTH * TILE_HEIGHT;
-    return MakeCircularBuffer(program, core, cb, n_tiles * tile_size, tile_size, tt::DataFormat::Int32);
-}
-
 std::string next_arg(int& i, int argc, char** argv) {
     if (i + 1 >= argc) {
         std::cerr << "Expected argument after " << argv[i] << std::endl;
@@ -109,55 +104,35 @@ int main(int argc, char** argv) {
     const float right = 1.0f;
     const float bottom = -1.5f;
     const float top = 1.5f;
-    std::vector<float> a_data(width * height);
-    std::vector<float> b_data(width * height);
 
     const uint32_t tile_size = TILE_WIDTH * TILE_HEIGHT;
     if((width * height) % tile_size != 0)
         throw std::runtime_error("Invalid dimensions, width * height must be divisible by tile_size");
     const uint32_t n_tiles = (width * height) / tile_size;
-    auto a = MakeBuffer(device, n_tiles, sizeof(float));
-    auto b = MakeBuffer(device, n_tiles, sizeof(float));
-    auto c = MakeBuffer(device, n_tiles, sizeof(int));
-
-    for(size_t y = 0; y < height; y++) {
-        for(size_t x = 0; x < width; x++) {
-            float real = left + (right - left) * x / width;
-            float imag = bottom + (top - bottom) * y / height;
-            a_data[y * width + x] = real;
-            b_data[y * width + x] = imag;
-        }
-    }
+    auto c = MakeBuffer(device, n_tiles, sizeof(float));
 
     const uint32_t tiles_per_cb = 4;
-    // Create 3 circular buffers. These will be used by the data movement kernels to stream data into the compute cores
-    // and for the compute cores to stream data out.
-    CBHandle cb_a = MakeCircularBufferFP32(program, core, tt::CBIndex::c_0, tiles_per_cb);
-    CBHandle cb_b = MakeCircularBufferFP32(program, core, tt::CBIndex::c_1, tiles_per_cb);
-    CBHandle cb_c = MakeCircularBufferINT32(program, core, tt::CBIndex::c_16, tiles_per_cb);
+    CBHandle cb_a = MakeCircularBufferFP32(program, core, tt::CBIndex::c_0, tiles_per_cb); // Why???
+    // CBHandle cb_b = MakeCircularBufferFP32(program, core, tt::CBIndex::c_1, tiles_per_cb);
+    CBHandle cb_c = MakeCircularBufferFP32(program, core, tt::CBIndex::c_16, tiles_per_cb);
 
-    EnqueueWriteBuffer(cq, a, a_data, false);
-    EnqueueWriteBuffer(cq, b, b_data, false);
-
-    auto reader = CreateKernel(
-        program,
-        "../single_core/kernel/interleaved_tile_read.cpp",
-        core,
-        DataMovementConfig{.processor = DataMovementProcessor::RISCV_0, .noc = NOC::RISCV_0_default});
     auto writer = CreateKernel(
         program,
-        "../single_core/kernel/tile_write.cpp",
+        "../single_core_nullary/kernel/tile_write.cpp",
         core,
         DataMovementConfig{.processor = DataMovementProcessor::RISCV_1, .noc = NOC::RISCV_1_default});
     auto compute = CreateKernel(
         program,
-        "../single_core/kernel/mendalbrot_compute.cpp",
+        "../single_core_nullary/kernel/mendalbrot_compute.cpp",
         core,
         ComputeConfig{.math_approx_mode = false, .compile_args = {}, .defines = {}});
 
-    SetRuntimeArgs(program, reader, core, {a->address(), b->address(), n_tiles});
+    // SetRuntimeArgs(program, reader, core, {a->address(), b->address(), n_tiles});
+    uint32_t params[4];
+    float p[4] = {left, right, bottom, top};
+    memcpy(params, p, sizeof(p));
     SetRuntimeArgs(program, writer, core, {c->address(), n_tiles});
-    SetRuntimeArgs(program, compute, core, {n_tiles});
+    SetRuntimeArgs(program, compute, core, {n_tiles, params[0], params[1], params[2], params[3], uint32_t{width}, uint32_t{height}});
 
     Finish(cq);
     auto start = std::chrono::high_resolution_clock::now();
@@ -168,7 +143,7 @@ int main(int argc, char** argv) {
 
     std::vector<float> c_data;
     EnqueueReadBuffer(cq, c, c_data, true);
-    int* c_bf16 = reinterpret_cast<int*>(c_data.data());
+    float* c_bf16 = reinterpret_cast<float*>(c_data.data());
 
     std::vector<uint8_t> image(width * height * 3);
     for(size_t y = 0; y < height; ++y) {
@@ -178,7 +153,7 @@ int main(int argc, char** argv) {
             map_color(iteration/max_iteration, image.data() + y * width * 3 + x * 3);
         }
     }
-    stbi_write_png("mandelbrot_tt_single_core.png", width, height, 3, image.data(), width * 3);
+    stbi_write_png("mandelbrot_tt_single_core_nullary.png", width, height, 3, image.data(), width * 3);
 
     // Finally, we close the device.
     CloseDevice(device);
