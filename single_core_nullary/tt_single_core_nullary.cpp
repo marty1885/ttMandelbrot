@@ -106,8 +106,8 @@ int main(int argc, char** argv) {
     const float top = 1.5f;
 
     const uint32_t tile_size = TILE_WIDTH * TILE_HEIGHT;
-    if((width * height) % tile_size != 0)
-        throw std::runtime_error("Invalid dimensions, width * height must be divisible by tile_size");
+    if(width % tile_size != 0)
+        throw std::runtime_error("Invalid dimensions, width must be divisible by tile_size");
     const uint32_t n_tiles = (width * height) / tile_size;
     auto c = MakeBuffer(device, n_tiles, sizeof(float));
 
@@ -132,7 +132,7 @@ int main(int argc, char** argv) {
     float p[4] = {left, right, bottom, top};
     memcpy(params, p, sizeof(p));
     SetRuntimeArgs(program, writer, core, {c->address(), n_tiles});
-    SetRuntimeArgs(program, compute, core, {n_tiles, params[0], params[1], params[2], params[3], uint32_t{width}, uint32_t{height}});
+    SetRuntimeArgs(program, compute, core, {params[0], params[1], params[2], params[3], uint32_t(width), uint32_t(height)});
 
     Finish(cq);
     auto start = std::chrono::high_resolution_clock::now();

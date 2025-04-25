@@ -47,11 +47,6 @@ CBHandle MakeCircularBufferFP32(Program& program, const CoreSpec& core, tt::CBIn
     return MakeCircularBuffer(program, core, cb, n_tiles * tile_size, tile_size, tt::DataFormat::Float32);
 }
 
-CBHandle MakeCircularBufferINT32(Program& program, const CoreSpec& core, tt::CBIndex cb, uint32_t n_tiles) {
-    constexpr uint32_t tile_size = sizeof(float) * TILE_WIDTH * TILE_HEIGHT;
-    return MakeCircularBuffer(program, core, cb, n_tiles * tile_size, tile_size, tt::DataFormat::Int32);
-}
-
 std::string next_arg(int& i, int argc, char** argv) {
     if (i + 1 >= argc) {
         std::cerr << "Expected argument after " << argv[i] << std::endl;
@@ -109,6 +104,7 @@ int main(int argc, char** argv) {
     const float right = 1.0f;
     const float bottom = -1.5f;
     const float top = 1.5f;
+    std::mt19937 rng(seed);
     std::vector<float> a_data(width * height);
     std::vector<float> b_data(width * height);
 
@@ -118,7 +114,7 @@ int main(int argc, char** argv) {
     const uint32_t n_tiles = (width * height) / tile_size;
     auto a = MakeBuffer(device, n_tiles, sizeof(float));
     auto b = MakeBuffer(device, n_tiles, sizeof(float));
-    auto c = MakeBuffer(device, n_tiles, sizeof(int));
+    auto c = MakeBuffer(device, n_tiles, sizeof(float));
 
     for(size_t y = 0; y < height; y++) {
         for(size_t x = 0; x < width; x++) {
@@ -134,7 +130,7 @@ int main(int argc, char** argv) {
     // and for the compute cores to stream data out.
     CBHandle cb_a = MakeCircularBufferFP32(program, core, tt::CBIndex::c_0, tiles_per_cb);
     CBHandle cb_b = MakeCircularBufferFP32(program, core, tt::CBIndex::c_1, tiles_per_cb);
-    CBHandle cb_c = MakeCircularBufferINT32(program, core, tt::CBIndex::c_16, tiles_per_cb);
+    CBHandle cb_c = MakeCircularBufferFP32(program, core, tt::CBIndex::c_16, tiles_per_cb);
 
     EnqueueWriteBuffer(cq, a, a_data, false);
     EnqueueWriteBuffer(cq, b, b_data, false);
@@ -168,7 +164,7 @@ int main(int argc, char** argv) {
 
     std::vector<float> c_data;
     EnqueueReadBuffer(cq, c, c_data, true);
-    int* c_bf16 = reinterpret_cast<int*>(c_data.data());
+    float* c_bf16 = reinterpret_cast<float*>(c_data.data());
 
     std::vector<uint8_t> image(width * height * 3);
     for(size_t y = 0; y < height; ++y) {

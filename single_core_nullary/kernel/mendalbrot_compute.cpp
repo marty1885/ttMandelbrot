@@ -83,13 +83,12 @@ namespace NAMESPACE {
 void MAIN {
     constexpr uint32_t TILE_WIDTH = 32;
     constexpr uint32_t TILE_HEIGHT = 32;
-    uint32_t n_tiles = get_arg_val<uint32_t>(0);
-    float left = get_arg_val<float>(1);
-    float right = get_arg_val<float>(2);
-    float bottom = get_arg_val<float>(3);
-    float top = get_arg_val<float>(4);
-    uint32_t width = get_arg_val<uint32_t>(5);
-    uint32_t height = get_arg_val<uint32_t>(6);
+    float left = get_arg_val<float>(0);
+    float right = get_arg_val<float>(1);
+    float bottom = get_arg_val<float>(2);
+    float top = get_arg_val<float>(3);
+    uint32_t width = get_arg_val<uint32_t>(4);
+    uint32_t height = get_arg_val<uint32_t>(5);
 
     constexpr auto cb_in0 = tt::CBIndex::c_0;
     constexpr auto cb_in1 = tt::CBIndex::c_1;
