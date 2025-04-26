@@ -90,6 +90,8 @@ int main(int argc, char* argv[])
     }
 
     // Save the image
-    stbi_write_png("mandelbrot.png", width, height, 3, image.data(), width * 3);
+    if(!save_image("mandelbrot.png", width, height, 3, image.data(), width * 3)) {
+        std::cerr << "Failed to save image." << std::endl;
+    }
 
 }

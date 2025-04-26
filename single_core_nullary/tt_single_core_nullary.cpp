@@ -155,7 +155,9 @@ int main(int argc, char** argv) {
             map_color(iteration/max_iteration, image.data() + y * width * 3 + x * 3);
         }
     }
-    stbi_write_png("mandelbrot_tt_single_core_nullary.png", width, height, 3, image.data(), width * 3);
+    if(!save_image("mandelbrot_tt_single_core_nullary.png", width, height, 3, image.data(), width * 3)) {
+        std::cerr << "Failed to save image." << std::endl;
+    }
 
     // Finally, we close the device.
     CloseDevice(device);

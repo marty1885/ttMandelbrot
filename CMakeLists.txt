@@ -4,16 +4,18 @@ project(ttMandelbrot)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_library(stbi_write STATIC
-    stb_image_write.c
+find_package(PNG REQUIRED)
+add_library(utils STATIC
+    utils/stb_image_write.c
 )
-target_include_directories(stbi_write PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
+target_include_directories(utils PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/utils
 )
+target_link_libraries(utils PRIVATE PNG::PNG)
 
 find_package(OpenMP REQUIRED)
 add_executable(cpu cpu.cpp)
-target_link_libraries(cpu PRIVATE stbi_write OpenMP::OpenMP_CXX)
+target_link_libraries(cpu PRIVATE utils OpenMP::OpenMP_CXX)
 
 list(PREPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 include(CPM)
@@ -59,18 +61,21 @@ target_link_libraries(ttmetal INTERFACE
 
 add_executable(tt_single_core single_core/tt_single_core.cpp)
 target_link_libraries(tt_single_core
+    PRIVATE
     ttmetal
-    stbi_write
+    utils
 )
 
 add_executable(tt_single_core_nullary single_core_nullary/tt_single_core_nullary.cpp)
 target_link_libraries(tt_single_core_nullary
+    PRIVATE
     ttmetal
-    stbi_write
+    utils
 )
 
 add_executable(tt_multi_core_nullary multi_core_nullary/tt_multi_core_nullary.cpp)
 target_link_libraries(tt_multi_core_nullary
+    PRIVATE
     ttmetal
-    stbi_write
+    utils
 )

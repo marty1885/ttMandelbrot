@@ -7,6 +7,7 @@ This program has only been tested on Tenstorrent Wormhole. It WILL NOT work on G
 ### Dependencies
 - tt-Metalium SDK
 - OpenMP (for CPU reference)
+- libpng (for image saving)
 
 ### Build
 
