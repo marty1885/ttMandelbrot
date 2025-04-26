@@ -125,7 +125,7 @@ int main(int argc, char** argv) {
         DataMovementConfig{.processor = DataMovementProcessor::RISCV_1, .noc = NOC::RISCV_1_default});
     auto compute = CreateKernel(
         program,
-        "../multi_core_nullary/kernel/mendalbrot_compute.cpp",
+        "../multi_core_nullary/kernel/mandelbrot_compute.cpp",
         all_cores,
         ComputeConfig{.math_approx_mode = false, .compile_args = {}, .defines = {}});
 

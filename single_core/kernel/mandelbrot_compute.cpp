@@ -8,7 +8,7 @@
 #define ITERATIONS (8)
 
 #ifdef TRISC_MATH
-inline void mendalbrot(const uint dst_offset) {
+inline void mandelbrot(const uint dst_offset) {
   constexpr uint dst_tile_size = 32;
   for(int _=0;_<ITERATIONS;_++) {
     vFloat real = dst_reg[0];
@@ -53,8 +53,8 @@ void MAIN {
             cb_pop_front(cb_in0, 1);
             cb_pop_front(cb_in1, 1);
 
-            // pseudo code: dst[0] = mendalbrot(dst[0], dst[1]);
-            MATH(llk_math_eltwise_binary_sfpu_params<false>(mendalbrot, 0, 1, VectorMode::RC);)
+            // pseudo code: dst[0] = mandelbrot(dst[0], dst[1]);
+            MATH(llk_math_eltwise_binary_sfpu_params<false>(mandelbrot, 0, 1, VectorMode::RC);)
 
             cb_reserve_back(cb_out0, 1);
             pack_tile(0, cb_out0);

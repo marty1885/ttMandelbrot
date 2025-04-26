@@ -9,7 +9,7 @@
 #define ITERATIONS (8)
 
 #ifdef TRISC_MATH
-inline void mendalbrot(float y_coord, float left, float right) {
+inline void mandelbrot(float y_coord, float left, float right) {
     math::set_dst_write_addr<DstTileLayout::Default, DstTileShape::Tile32x32>(0);
     math::set_addr_mod_base();
     TTI_STALLWAIT(p_stall::STALL_SFPU, p_stall::MATH);
@@ -105,8 +105,8 @@ void MAIN {
             float l = left + (right - left) * x / x_max;
             float r = l + (right - left) / x_max;
 
-            // pseudo code: dst[0] = mendalbrot(y_coord, l, r);
-            MATH(mendalbrot(y_coord, l, r));
+            // pseudo code: dst[0] = mandelbrot(y_coord, l, r);
+            MATH(mandelbrot(y_coord, l, r));
 
             cb_reserve_back(cb_out0, 1);
             pack_tile(0, cb_out0);
