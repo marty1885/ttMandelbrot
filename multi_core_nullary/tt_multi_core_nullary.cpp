@@ -1,4 +1,5 @@
 
+#include <sys/types.h>
 #include <tt-metalium/core_coord.hpp>
 #include <tt-metalium/host_api.hpp>
 #include <tt-metalium/device.hpp>
@@ -143,19 +144,17 @@ int main(int argc, char** argv) {
     memcpy(params, p, sizeof(p));
 
     uint32_t num_cores = core_grid.x * core_grid.y;
-    for(uint32_t y = 0; y < core_grid.y; y++) {
-        for(uint32_t x = 0; x < core_grid.x; x++) {
-            auto core = CoreCoord(x, y);
-            uint32_t core_id = core.x + core.y * core_grid.x;
-            uint32_t start_row = height / num_cores * core_id;
-            uint32_t end_row = start_row + height / num_cores;
-            if(end_row > height)
-                end_row = height;
-            if(core_id == (core_grid.y - 1) * (core_grid.x - 1))
-                end_row = height;
-            SetRuntimeArgs(program, writer, core, {c->address(), start_row, end_row, uint32_t(width / tile_size)});
-            SetRuntimeArgs(program, compute, core, {params[0], params[1], params[2], params[3], uint32_t(width), uint32_t(height), start_row, end_row});
-        }
+    uint32_t height_chunk = height / num_cores + (height % num_cores != 0);
+    for(uint32_t i=0; i<num_cores; ++i) {
+        uint32_t x = i % core_grid.x;
+        uint32_t y = i / core_grid.x;
+        CoreCoord core(x, y);
+
+        uint32_t start_row = i * height_chunk;
+        uint32_t end_row = std::min(start_row + height_chunk, uint32_t(height));
+
+        SetRuntimeArgs(program, writer, core, {c->address(), start_row, end_row, uint32_t(width / tile_size)});
+        SetRuntimeArgs(program, compute, core, {params[0], params[1], params[2], params[3], uint32_t(width), uint32_t(height), start_row, end_row});
     }
 
     Finish(cq);
