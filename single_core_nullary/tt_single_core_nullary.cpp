@@ -60,10 +60,12 @@ void help(std::string_view program_name) {
     std::cout << "This program demonstrates how to add two vectors using tt-Metalium.\n";
     std::cout << "\n";
     std::cout << "Options:\n";
-    std::cout << "  --device, -d <device_id>  Specify the device to run the program on. Default is 0.\n";
-    std::cout << "  --seed, -s <seed>         Specify the seed for the random number generator. Default is random.\n";
-    std::cout << "  --width, -w <width>       Specify the width of the image. Default is 1024.\n";
-    std::cout << "  --height, -h <height>     Specify the height of the image. Default is 1024.\n";
+    std::cout << "  --device, -d <device_id>   Specify the device to run the program on. Default is 0.\n";
+    std::cout << "  --width, -w <width>        Specify the width of the image. Default is 1024.\n";
+    std::cout << "  --height, -h <height>      Specify the height of the image. Default is 1024.\n";
+    std::cout << "  --output, -o <output_file> Specify the output file. Default is mandelbrot_tt_single_core_nullary.png.\n";
+    std::cout << "                             Supported formats: PNG, JPG, BMP.\n";
+    std::cout << "  --help                     Display this help message.\n";
     exit(0);
 }
 
@@ -72,6 +74,11 @@ int main(int argc, char** argv) {
     int device_id = 0;
     size_t width = 1024;
     size_t height = 1024;
+    const float left = -2.0f;
+    const float right = 1.0f;
+    const float bottom = -1.5f;
+    const float top = 1.5f;
+    std::string output_file = "mandelbrot_tt_single_core_nullary.png";
 
     // Quick and dirty argument parsing.
     for (int i = 1; i < argc; i++) {
@@ -84,6 +91,8 @@ int main(int argc, char** argv) {
             width = std::stoi(next_arg(i, argc, argv));
         } else if (arg == "--height" || arg == "-h") {
             height = std::stoi(next_arg(i, argc, argv));
+        } else if (arg == "--output" || arg == "-o") {
+            output_file = next_arg(i, argc, argv);
         } else if (arg == "--help" || arg == "-h") {
             help(argv[0]);
             return 0;
@@ -93,26 +102,21 @@ int main(int argc, char** argv) {
         }
     }
 
+    const uint32_t tile_size = TILE_WIDTH * TILE_HEIGHT;
+    if(width % tile_size != 0)
+        throw std::runtime_error("Invalid dimensions, width must be divisible by tile_size");
+
     IDevice* device = CreateDevice(device_id);
     device->enable_program_cache();
 
     Program program = CreateProgram();
-    constexpr CoreCoord core = {0, 0};
-
     CommandQueue& cq = device->command_queue();
 
-    const float left = -2.0f;
-    const float right = 1.0f;
-    const float bottom = -1.5f;
-    const float top = 1.5f;
-
-    const uint32_t tile_size = TILE_WIDTH * TILE_HEIGHT;
-    if(width % tile_size != 0)
-        throw std::runtime_error("Invalid dimensions, width must be divisible by tile_size");
     const uint32_t n_tiles = (width * height) / tile_size;
     auto c = MakeBuffer(device, n_tiles, sizeof(float));
 
-    const uint32_t tiles_per_cb = 4;
+    constexpr uint32_t tiles_per_cb = 4;
+    constexpr CoreCoord core = {0, 0};
     CBHandle cb_a = MakeCircularBufferFP32(program, core, tt::CBIndex::c_0, tiles_per_cb); // Why???
     // CBHandle cb_b = MakeCircularBufferFP32(program, core, tt::CBIndex::c_1, tiles_per_cb);
     CBHandle cb_c = MakeCircularBufferFP32(program, core, tt::CBIndex::c_16, tiles_per_cb);
@@ -155,7 +159,7 @@ int main(int argc, char** argv) {
             map_color(iteration/max_iteration, image.data() + y * width * 3 + x * 3);
         }
     }
-    if(!save_image("mandelbrot_tt_single_core_nullary.png", width, height, 3, image.data(), width * 3)) {
+    if(!save_image(output_file, width, height, 3, image.data(), width * 3)) {
         std::cerr << "Failed to save image." << std::endl;
     }
 

@@ -12,8 +12,11 @@ void help(std::string_view program_name) {
     std::cout << "This program demonstrates how to add two vectors using tt-Metalium.\n";
     std::cout << "\n";
     std::cout << "Options:\n";
-    std::cout << "  --width, -w <width>       Specify the width of the image. Default is 1024.\n";
-    std::cout << "  --height, -h <height>     Specify the height of the image. Default is 1024.\n";
+    std::cout << "  --width, -w <width>        Specify the width of the image. Default is 1024.\n";
+    std::cout << "  --height, -h <height>      Specify the height of the image. Default is 1024.\n";
+    std::cout << "  --output, -o <filename>    Specify the output filename. Default is mandelbrot.png.\n";
+    std::cout << "                             Supported formats: PNG, JPG, BMP.\n";
+    std::cout << "  --help                     Display this help message.\n";
     exit(0);
 }
 
@@ -34,6 +37,7 @@ int main(int argc, char* argv[])
     float right = 1.0f;
     float bottom = -1.5f;
     float top = 1.5f;
+    std::string output_file = "mandelbrot.png";
 
     const int max_iteration = 64;
 
@@ -44,7 +48,9 @@ int main(int argc, char* argv[])
             width = std::stoi(next_arg(i, argc, argv));
         } else if (arg == "--height" || arg == "-h") {
             height = std::stoi(next_arg(i, argc, argv));
-        } else if (arg == "--help" || arg == "-h") {
+        } else if (arg == "--output" || arg == "-o") {
+            output_file = next_arg(i, argc, argv);
+        } else if (arg == "--help") {
             help(argv[0]);
             return 0;
         } else {
@@ -90,7 +96,7 @@ int main(int argc, char* argv[])
     }
 
     // Save the image
-    if(!save_image("mandelbrot.png", width, height, 3, image.data(), width * 3)) {
+    if(!save_image(output_file, width, height, 3, image.data(), width * 3)) {
         std::cerr << "Failed to save image." << std::endl;
     }
 

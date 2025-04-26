@@ -60,10 +60,13 @@ void help(std::string_view program_name) {
     std::cout << "This program demonstrates how to add two vectors using tt-Metalium.\n";
     std::cout << "\n";
     std::cout << "Options:\n";
-    std::cout << "  --device, -d <device_id>  Specify the device to run the program on. Default is 0.\n";
-    std::cout << "  --seed, -s <seed>         Specify the seed for the random number generator. Default is random.\n";
-    std::cout << "  --width, -w <width>       Specify the width of the image. Default is 1024.\n";
-    std::cout << "  --height, -h <height>     Specify the height of the image. Default is 1024.\n";
+    std::cout << "  --device, -d <device_id>   Specify the device to run the program on. Default is 0.\n";
+    std::cout << "  --seed, -s <seed>          Specify the seed for the random number generator. Default is random.\n";
+    std::cout << "  --width, -w <width>        Specify the width of the image. Default is 1024.\n";
+    std::cout << "  --height, -h <height>      Specify the height of the image. Default is 1024.\n";
+    std::cout << "  --output, -o <output_file> Specify the output file name. Default is mandelbrot_tt_multi_core_nullary.png.\n";
+    std::cout << "                             Supported formats: PNG, JPG, BMP.\n";
+    std::cout << "  --help                     Display this help message.\n";
     exit(0);
 }
 
@@ -72,6 +75,7 @@ int main(int argc, char** argv) {
     int device_id = 0;
     size_t width = 1024;
     size_t height = 1024;
+    std::string output_file = "mandelbrot_tt_multi_core_nullary.png";
 
     // Quick and dirty argument parsing.
     for (int i = 1; i < argc; i++) {
@@ -84,6 +88,8 @@ int main(int argc, char** argv) {
             width = std::stoi(next_arg(i, argc, argv));
         } else if (arg == "--height" || arg == "-h") {
             height = std::stoi(next_arg(i, argc, argv));
+        } else if (arg == "--output" || arg == "-o") {
+            output_file = next_arg(i, argc, argv);
         } else if (arg == "--help" || arg == "-h") {
             help(argv[0]);
             return 0;
