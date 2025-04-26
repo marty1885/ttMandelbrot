@@ -64,6 +64,7 @@ target_link_libraries(tt_single_core
     PRIVATE
     ttmetal
     utils
+    OpenMP::OpenMP_CXX
 )
 
 add_executable(tt_single_core_nullary single_core_nullary/tt_single_core_nullary.cpp)
@@ -71,6 +72,7 @@ target_link_libraries(tt_single_core_nullary
     PRIVATE
     ttmetal
     utils
+    OpenMP::OpenMP_CXX
 )
 
 add_executable(tt_multi_core_nullary multi_core_nullary/tt_multi_core_nullary.cpp)
@@ -78,4 +80,5 @@ target_link_libraries(tt_multi_core_nullary
     PRIVATE
     ttmetal
     utils
+    OpenMP::OpenMP_CXX
 )

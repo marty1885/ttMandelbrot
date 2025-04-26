@@ -27,3 +27,19 @@ There will be 4 files generated. **Run them in the build directory** else the ke
 * `tt_single_core` - Baseline single (Tensix) core implementation using DRAM to store initial real and imaginary parts of the complex number
 * `tt_single_core_nullary` - Baseline single (Tensix) core implementation but the complex number is generated on the fly
 * `tt_multi_core_nullary` - Optimized multi-core implementation version of the above
+
+Each support a set of common parameters:
+- `--width <width>` - Width of the image in pixels
+- `--height <height>` - Height of the image in pixels
+- `--output <output>` - Output file name (Supported formats: PNG, JPEG, BMP)
+- `--help` - Display the program help message
+
+For details please refer to the help message.
+
+### Benchmarking
+
+`benchmark.sh` can be run from the root of the project after building to benchmark the performance of the different implementations. The results will be saved in `benchmark.csv`. It must be ran using zsh.
+
+```bash
+zsh benchmark.sh
+```

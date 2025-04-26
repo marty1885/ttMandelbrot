@@ -3,6 +3,7 @@
 #include <tt-metalium/host_api.hpp>
 #include <tt-metalium/device.hpp>
 #include <tt-metalium/bfloat16.hpp>
+#include <tt-metalium/persistent_kernel_cache.hpp>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -106,6 +107,7 @@ int main(int argc, char** argv) {
     if(width % tile_size != 0)
         throw std::runtime_error("Invalid dimensions, width must be divisible by tile_size");
 
+    tt::tt_metal::detail::EnablePersistentKernelCache();
     IDevice* device = CreateDevice(device_id);
     device->enable_program_cache();
 
@@ -152,6 +154,7 @@ int main(int argc, char** argv) {
     float* c_bf16 = reinterpret_cast<float*>(c_data.data());
 
     std::vector<uint8_t> image(width * height * 3);
+    #pragma omp parallel for
     for(size_t y = 0; y < height; ++y) {
         for(size_t x = 0; x < width; ++x) {
             float iteration = c_bf16[y * width + x];

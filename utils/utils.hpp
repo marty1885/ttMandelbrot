@@ -4,6 +4,7 @@
 #include <cmath>
 #include <algorithm>
 #include <png.h>
+#include <string>
 #include "stb_image_write.h"
 
 inline void map_color(float iteration_fraction, uint8_t* color) {
@@ -113,10 +114,8 @@ static bool save_image(const std::string& path, int width, int height, int chann
     else if(path.ends_with(".jpg")) {
         return stbi_write_jpg(path.c_str(), width, height, channels, rgb, 100);
     }
-    else if(path.ends_with(".bmp")) {
+    else if(path.ends_with(".bmp") || path.find(".") == std::string::npos) {
         return stbi_write_bmp(path.c_str(), width, height, channels, rgb);
     }
-    else {
-        return false;
-    }
+    return false;
 }

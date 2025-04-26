@@ -3,6 +3,8 @@
 #include <cmath>
 #include <cstdint>
 #include <chrono>
+#include <omp.h>
+#include <thread>
 
 #include "stb_image_write.h"
 #include "utils.hpp"
@@ -16,6 +18,7 @@ void help(std::string_view program_name) {
     std::cout << "  --height, -h <height>      Specify the height of the image. Default is 1024.\n";
     std::cout << "  --output, -o <filename>    Specify the output filename. Default is mandelbrot.png.\n";
     std::cout << "                             Supported formats: PNG, JPG, BMP.\n";
+    std::cout << "  --threads, -t <num_threads> Specify the number of threads to use. Default is auto.\n";
     std::cout << "  --help                     Display this help message.\n";
     exit(0);
 }
@@ -38,6 +41,7 @@ int main(int argc, char* argv[])
     float bottom = -1.5f;
     float top = 1.5f;
     std::string output_file = "mandelbrot.png";
+    int n_threads = std::thread::hardware_concurrency();
 
     const int max_iteration = 64;
 
@@ -50,6 +54,8 @@ int main(int argc, char* argv[])
             height = std::stoi(next_arg(i, argc, argv));
         } else if (arg == "--output" || arg == "-o") {
             output_file = next_arg(i, argc, argv);
+        } else if (arg == "--threads" || arg == "-t") {
+            n_threads = std::stoi(next_arg(i, argc, argv));
         } else if (arg == "--help") {
             help(argv[0]);
             return 0;
@@ -61,6 +67,7 @@ int main(int argc, char* argv[])
 
 
     std::vector<int> iterations(width * height);
+    omp_set_num_threads(n_threads);
 
     auto start = std::chrono::high_resolution_clock::now();
     #pragma omp parallel for
@@ -87,6 +94,8 @@ int main(int argc, char* argv[])
     std::cout << "Elapsed time: " << elapsed.count() << " seconds" << std::endl;
 
     std::vector<uint8_t> image(width * height * 3);
+    omp_set_num_threads(std::thread::hardware_concurrency());
+    #pragma omp parallel for
     for(size_t y = 0; y < height; ++y) {
         for(size_t x = 0; x < width; ++x) {
             int iteration = iterations[y * width + x];
