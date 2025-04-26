@@ -6,8 +6,6 @@
 #include "compute_kernel_api/eltwise_binary_sfpu.h"
 #include "compute_kernel_api/eltwise_unary/eltwise_unary.h"
 
-#define ITERATIONS (8)
-
 #ifdef TRISC_MATH
 inline void mandelbrot(float y_coord, float left, float right) {
     math::set_dst_write_addr<DstTileLayout::Default, DstTileShape::Tile32x32>(0);
@@ -25,33 +23,6 @@ inline void mandelbrot(float y_coord, float left, float right) {
         vFloat vdelta = vright - vleft;
         vFloat vchunk_coarse = vleft + (vdelta) * (1.f / 16.f) * vi;
         vFloat vreal_lane_id = int32_to_float(vConstTileId);
-        vFloat vchunk_fine = vchunk_coarse + (vreal_lane_id) * lane_delta;
-
-        vFloat real = vchunk_fine;
-        vFloat imag = y_coord;
-        vFloat zx = real;
-        vFloat zy = imag;
-        vFloat count = 0;
-
-        for(int i=0;i<max_iter;i++) {
-          v_if(zx * zx + zy * zy < 4.f) {
-            vFloat tmp = zx * zx - zy * zy + real;
-            zy = 2.f * zx * zy + imag;
-            zx = tmp;
-            count += 1.f;
-          }
-          v_endif;
-        }
-        dst_reg[i] = count;
-    }
-
-    for(int i=1;i<32;i+=2) {
-        vFloat vleft = left;
-        vFloat vright = right;
-        vFloat vi = int32_to_float(i / 2);
-        vFloat vdelta = vright - vleft;
-        vFloat vchunk_coarse = vleft + (vdelta) * (1.f / 16.f) * vi;
-        vFloat vreal_lane_id = int32_to_float(vConstTileId+1);
         vFloat vchunk_fine = vchunk_coarse + (vreal_lane_id) * lane_delta;
 
         vFloat real = vchunk_fine;

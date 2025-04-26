@@ -1,6 +1,6 @@
 #!/bin/zsh
 
-executables=("cpu" "cpu_single_core" "tt_single_core" "tt_single_core_nullary" "tt_multi_core_nullary")
+executables=("cpu_single_core" "tt_single_core" "tt_single_core_nullary" "tt_multi_core_nullary" "cpu")
 output_csv="benchmark.csv"
 
 echo "executable,size,time" > $output_csv

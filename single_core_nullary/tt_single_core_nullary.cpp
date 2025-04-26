@@ -107,7 +107,7 @@ int main(int argc, char** argv) {
     if(width % tile_size != 0)
         throw std::runtime_error("Invalid dimensions, width must be divisible by tile_size");
 
-    tt::tt_metal::detail::EnablePersistentKernelCache();
+    // tt::tt_metal::detail::EnablePersistentKernelCache();
     IDevice* device = CreateDevice(device_id);
     device->enable_program_cache();
 

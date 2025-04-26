@@ -5,9 +5,9 @@
 #include "compute_kernel_api/eltwise_binary_sfpu.h"
 #include "compute_kernel_api/eltwise_unary/eltwise_unary.h"
 
-#define ITERATIONS (8)
 
 #ifdef TRISC_MATH
+#define ITERATIONS (8)
 inline void mandelbrot(const uint dst_offset) {
   constexpr uint dst_tile_size = 32;
   for(int _=0;_<ITERATIONS;_++) {
@@ -31,6 +31,7 @@ inline void mandelbrot(const uint dst_offset) {
     dst_reg++;
   }
 }
+#undef ITERATIONS
 #endif
 
 namespace NAMESPACE {

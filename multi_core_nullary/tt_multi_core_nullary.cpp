@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    tt::tt_metal::detail::EnablePersistentKernelCache();
+    // tt::tt_metal::detail::EnablePersistentKernelCache();
     IDevice* device = CreateDevice(device_id);
     device->enable_program_cache();
 
@@ -150,6 +150,8 @@ int main(int argc, char** argv) {
             uint32_t start_row = height / num_cores * core_id;
             uint32_t end_row = start_row + height / num_cores;
             if(end_row > height)
+                end_row = height;
+            if(core_id == (core_grid.y - 1) * (core_grid.x - 1))
                 end_row = height;
             SetRuntimeArgs(program, writer, core, {c->address(), start_row, end_row, uint32_t(width / tile_size)});
             SetRuntimeArgs(program, compute, core, {params[0], params[1], params[2], params[3], uint32_t(width), uint32_t(height), start_row, end_row});
