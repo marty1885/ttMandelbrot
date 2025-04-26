@@ -97,7 +97,8 @@ int main(int argc, char** argv) {
     device->enable_program_cache();
 
     Program program = CreateProgram();
-    constexpr CoreCoord core = {0, 0};
+    auto core_grid = device->compute_with_storage_grid_size();
+    auto all_cores = CoreRange({0, 0}, {core_grid.x - 1, core_grid.y - 1});
 
     CommandQueue& cq = device->command_queue();
 
@@ -105,56 +106,47 @@ int main(int argc, char** argv) {
     const float right = 1.0f;
     const float bottom = -1.5f;
     const float top = 1.5f;
-    std::mt19937 rng(seed);
-    std::vector<float> a_data(width * height);
-    std::vector<float> b_data(width * height);
 
     const uint32_t tile_size = TILE_WIDTH * TILE_HEIGHT;
-    if((width * height) % tile_size != 0)
-        throw std::runtime_error("Invalid dimensions, width * height must be divisible by tile_size");
+    if(width % tile_size != 0)
+        throw std::runtime_error("Invalid dimensions, width must be divisible by tile_size");
     const uint32_t n_tiles = (width * height) / tile_size;
-    auto a = MakeBuffer(device, n_tiles, sizeof(float));
-    auto b = MakeBuffer(device, n_tiles, sizeof(float));
     auto c = MakeBuffer(device, n_tiles, sizeof(float));
 
-    for(size_t y = 0; y < height; y++) {
-        for(size_t x = 0; x < width; x++) {
-            float real = left + (right - left) * x / width;
-            float imag = bottom + (top - bottom) * y / height;
-            a_data[y * width + x] = real;
-            b_data[y * width + x] = imag;
-        }
-    }
-
     const uint32_t tiles_per_cb = 4;
-    // Create 3 circular buffers. These will be used by the data movement kernels to stream data into the compute cores
-    // and for the compute cores to stream data out.
-    CBHandle cb_a = MakeCircularBufferFP32(program, core, tt::CBIndex::c_0, tiles_per_cb);
-    CBHandle cb_b = MakeCircularBufferFP32(program, core, tt::CBIndex::c_1, tiles_per_cb);
-    CBHandle cb_c = MakeCircularBufferFP32(program, core, tt::CBIndex::c_16, tiles_per_cb);
+    CBHandle cb_a = MakeCircularBufferFP32(program, all_cores, tt::CBIndex::c_0, tiles_per_cb); // Why???
+    // CBHandle cb_b = MakeCircularBufferFP32(program, core, tt::CBIndex::c_1, tiles_per_cb);
+    CBHandle cb_c = MakeCircularBufferFP32(program, all_cores, tt::CBIndex::c_16, tiles_per_cb);
 
-    EnqueueWriteBuffer(cq, a, a_data, false);
-    EnqueueWriteBuffer(cq, b, b_data, false);
-
-    auto reader = CreateKernel(
-        program,
-        "../single_core/kernel/interleaved_tile_read.cpp",
-        core,
-        DataMovementConfig{.processor = DataMovementProcessor::RISCV_0, .noc = NOC::RISCV_0_default});
     auto writer = CreateKernel(
         program,
-        "../single_core/kernel/tile_write.cpp",
-        core,
+        "../multi_core_nullary/kernel/tile_write.cpp",
+        all_cores,
         DataMovementConfig{.processor = DataMovementProcessor::RISCV_1, .noc = NOC::RISCV_1_default});
     auto compute = CreateKernel(
         program,
-        "../single_core/kernel/mendalbrot_compute.cpp",
-        core,
+        "../multi_core_nullary/kernel/mendalbrot_compute.cpp",
+        all_cores,
         ComputeConfig{.math_approx_mode = false, .compile_args = {}, .defines = {}});
 
-    SetRuntimeArgs(program, reader, core, {a->address(), b->address(), n_tiles});
-    SetRuntimeArgs(program, writer, core, {c->address(), n_tiles});
-    SetRuntimeArgs(program, compute, core, {n_tiles});
+    // SetRuntimeArgs(program, reader, core, {a->address(), b->address(), n_tiles});
+    uint32_t params[4];
+    float p[4] = {left, right, bottom, top};
+    memcpy(params, p, sizeof(p));
+
+    uint32_t num_cores = core_grid.x * core_grid.y;
+    for(uint32_t y = 0; y < core_grid.y; y++) {
+        for(uint32_t x = 0; x < core_grid.x; x++) {
+            auto core = CoreCoord(x, y);
+            uint32_t core_id = core.x + core.y * core_grid.x;
+            uint32_t start_row = height / num_cores * core_id;
+            uint32_t end_row = start_row + height / num_cores;
+            if(end_row > height)
+                end_row = height;
+            SetRuntimeArgs(program, writer, core, {c->address(), start_row, end_row, uint32_t(width / tile_size)});
+            SetRuntimeArgs(program, compute, core, {params[0], params[1], params[2], params[3], uint32_t(width), uint32_t(height), start_row, end_row});
+        }
+    }
 
     Finish(cq);
     EnqueueProgram(cq, program, true); // Run it a 1st time to get the compiler out of the way
@@ -176,7 +168,7 @@ int main(int argc, char** argv) {
             map_color(iteration/max_iteration, image.data() + y * width * 3 + x * 3);
         }
     }
-    stbi_write_png("mandelbrot_tt_single_core.png", width, height, 3, image.data(), width * 3);
+    stbi_write_png("mandelbrot_tt_multi_core_nullary.png", width, height, 3, image.data(), width * 3);
 
     // Finally, we close the device.
     CloseDevice(device);

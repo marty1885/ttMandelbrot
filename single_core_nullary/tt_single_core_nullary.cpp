@@ -94,6 +94,7 @@ int main(int argc, char** argv) {
     }
 
     IDevice* device = CreateDevice(device_id);
+    device->enable_program_cache();
 
     Program program = CreateProgram();
     constexpr CoreCoord core = {0, 0};
@@ -135,6 +136,7 @@ int main(int argc, char** argv) {
     SetRuntimeArgs(program, compute, core, {params[0], params[1], params[2], params[3], uint32_t(width), uint32_t(height)});
 
     Finish(cq);
+    EnqueueProgram(cq, program, true); // Run it a 1st time to get the compiler out of the way
     auto start = std::chrono::high_resolution_clock::now();
     EnqueueProgram(cq, program, true);
     auto end = std::chrono::high_resolution_clock::now();

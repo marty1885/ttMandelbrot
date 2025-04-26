@@ -7,10 +7,28 @@
 #include "stb_image_write.h"
 #include "utils.hpp"
 
-int main()
+void help(std::string_view program_name) {
+    std::cout << "Usage: " << program_name << " [options]\n";
+    std::cout << "This program demonstrates how to add two vectors using tt-Metalium.\n";
+    std::cout << "\n";
+    std::cout << "Options:\n";
+    std::cout << "  --width, -w <width>       Specify the width of the image. Default is 1024.\n";
+    std::cout << "  --height, -h <height>     Specify the height of the image. Default is 1024.\n";
+    exit(0);
+}
+
+std::string next_arg(int& i, int argc, char** argv) {
+    if (i + 1 >= argc) {
+        std::cerr << "Expected argument after " << argv[i] << std::endl;
+        exit(1);
+    }
+    return argv[++i];
+}
+
+int main(int argc, char* argv[])
 {
-    const size_t width = 1024;
-    const size_t height = 1024;
+    size_t width = 1024;
+    size_t height = 1024;
 
     float left = -2.0f;
     float right = 1.0f;
@@ -18,6 +36,23 @@ int main()
     float top = 1.5f;
 
     const int max_iteration = 64;
+
+    // Quick and dirty argument parsing.
+    for (int i = 1; i < argc; i++) {
+        std::string_view arg = argv[i];
+        if (arg == "--width" || arg == "-w") {
+            width = std::stoi(next_arg(i, argc, argv));
+        } else if (arg == "--height" || arg == "-h") {
+            height = std::stoi(next_arg(i, argc, argv));
+        } else if (arg == "--help" || arg == "-h") {
+            help(argv[0]);
+            return 0;
+        } else {
+            std::cout << "Unknown argument: " << arg << std::endl;
+            help(argv[0]);
+        }
+    }
+
 
     std::vector<int> iterations(width * height);
 
