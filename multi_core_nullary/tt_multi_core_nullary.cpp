@@ -101,7 +101,7 @@ int main(int argc, char** argv) {
         }
     }
 
-    // tt::tt_metal::detail::EnablePersistentKernelCache();
+    tt::tt_metal::detail::EnablePersistentKernelCache();
     IDevice* device = CreateDevice(device_id);
     device->enable_program_cache();
 

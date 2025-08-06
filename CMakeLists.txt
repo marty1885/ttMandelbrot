@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project(ttMandelbrot)
 
 set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 
 find_package(PNG REQUIRED)
 add_library(utils STATIC
@@ -51,8 +52,6 @@ target_link_directories(ttmetal INTERFACE
 
 target_link_libraries(ttmetal INTERFACE
     fmt
-    magic_enum
-    Reflect::Reflect
     yaml-cpp
     Boost::core
     Boost::container

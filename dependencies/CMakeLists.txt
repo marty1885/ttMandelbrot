@@ -1,21 +1,25 @@
-# Shadow the cache variable with a blank value
-# Placing a no-op .clang-tidy file at the root of CPM cache is insufficient as some projects may define
-# their own .clang-tidy within themselves and still not be clean against it <cough>flatbuffers</cough>
-set(CMAKE_C_CLANG_TIDY "")
-set(CMAKE_CXX_CLANG_TIDY "")
+############################################################################################################################
+# CPM
+############################################################################################################################
+include(${PROJECT_SOURCE_DIR}/cmake/CPM.cmake)
 
 ############################################################################################################################
 # Boost
 ############################################################################################################################
 
-include(${PROJECT_SOURCE_DIR}/cmake/fetch_boost.cmake)
-
-fetch_boost_library(core)
-fetch_boost_library(smart_ptr)
-fetch_boost_library(container)
-
-add_library(span INTERFACE)
-target_link_libraries(span INTERFACE Boost::core)
+CPMAddPackage(
+    NAME Boost
+    VERSION 1.86.0
+    URL
+        https://github.com/boostorg/boost/releases/download/boost-1.86.0/boost-1.86.0-cmake.tar.xz
+        URL_HASH
+        SHA256=2c5ec5edcdff47ff55e27ed9560b0a0b94b07bd07ed9928b476150e16b0efc57
+    OPTIONS
+        "BOOST_ENABLE_CMAKE ON"
+        "BOOST_SKIP_INSTALL_RULES ON"
+        "BUILD_SHARED_LIBS OFF"
+        "BOOST_INCLUDE_LIBRARIES core\\\;container\\\;smart_ptr"
+)
 
 ############################################################################################################################
 # yaml-cpp
@@ -25,54 +29,126 @@ CPMAddPackage(
     NAME yaml-cpp
     GITHUB_REPOSITORY jbeder/yaml-cpp
     GIT_TAG 0.8.0
-    PATCHES
-        yaml-cpp.patch
+    PATCHES yaml-cpp.patch
     OPTIONS
         "YAML_CPP_BUILD_TESTS OFF"
         "YAML_CPP_BUILD_TOOLS OFF"
         "YAML_BUILD_SHARED_LIBS OFF"
 )
 
-if(yaml-cpp_ADDED)
-    set_target_properties(
-        yaml-cpp
-        PROPERTIES
-            DEBUG_POSTFIX
-                ""
-    )
-endif()
+############################################################################################################################
+# googletest
+############################################################################################################################
+
+CPMAddPackage(
+    NAME googletest
+    GITHUB_REPOSITORY google/googletest
+    GIT_TAG v1.13.0
+    VERSION 1.13.0
+    OPTIONS
+        "INSTALL_GTEST OFF"
+)
 
 ############################################################################################################################
 # boost-ext reflect : https://github.com/boost-ext/reflect
 ############################################################################################################################
 
-CPMAddPackage(NAME reflect GITHUB_REPOSITORY boost-ext/reflect GIT_TAG v1.1.1)
-if(reflect_ADDED)
-    add_library(reflect INTERFACE)
-    add_library(Reflect::Reflect ALIAS reflect)
-    target_include_directories(reflect SYSTEM INTERFACE ${reflect_SOURCE_DIR})
-endif()
-
-############################################################################################################################
-# magic_enum : https://github.com/Neargye/magic_enum
-############################################################################################################################
-
-CPMAddPackage(NAME magic_enum GITHUB_REPOSITORY Neargye/magic_enum GIT_TAG v0.9.7)
+CPMAddPackage(NAME reflect GITHUB_REPOSITORY boost-ext/reflect GIT_TAG v1.2.6)
 
 ############################################################################################################################
 # fmt : https://github.com/fmtlib/fmt
 ############################################################################################################################
 
-CPMAddPackage(NAME fmt GITHUB_REPOSITORY fmtlib/fmt GIT_TAG 11.0.1)
+CPMAddPackage(NAME fmt GITHUB_REPOSITORY fmtlib/fmt GIT_TAG 11.1.4)
 
 ############################################################################################################################
-# range-v3 : https://github.com/ericniebler/range-v3
+# magic_enum : https://github.com/Neargye/magic_enum
 ############################################################################################################################
 
-CPMAddPackage(NAME range-v3 GITHUB_REPOSITORY ericniebler/range-v3 PATCHES ranges-v3.patch GIT_TAG 0.12.0)
+include(FetchContent)
+
+FetchContent_Declare(
+    enchantum
+    GIT_REPOSITORY https://github.com/ZXShady/enchantum.git
+    GIT_TAG 8ca5b0eb7e7ebe0252e5bc6915083f1dd1b8294e
+)
+
+FetchContent_MakeAvailable(enchantum)
 
 ############################################################################################################################
 # nlohmann/json : https://github.com/nlohmann/json
 ############################################################################################################################
 
-CPMAddPackage(NAME json GITHUB_REPOSITORY nlohmann/json GIT_TAG v3.12.0)
+CPMAddPackage(NAME nlohmann_json GITHUB_REPOSITORY nlohmann/json GIT_TAG v3.11.3 OPTIONS "JSON_BuildTests OFF")
+
+CPMAddPackage(NAME xtl GITHUB_REPOSITORY xtensor-stack/xtl GIT_TAG 0.8.0 OPTIONS "XTL_ENABLE_TESTS OFF")
+
+CPMAddPackage(NAME xtensor GITHUB_REPOSITORY xtensor-stack/xtensor GIT_TAG 0.26.0 OPTIONS "XTENSOR_ENABLE_TESTS OFF")
+
+CPMAddPackage(
+    NAME xtensor-blas
+    GITHUB_REPOSITORY xtensor-stack/xtensor-blas
+    GIT_TAG 0.22.0
+    OPTIONS
+        "XTENSOR_ENABLE_TESTS OFF"
+)
+
+include(${PROJECT_SOURCE_DIR}/dependencies/fetch_cli11.cmake)
+
+# gersemi: off
+# CPMAddPackage(
+#     NAME msgpack
+#     GIT_REPOSITORY https://github.com/msgpack/msgpack-c.git
+#     GIT_TAG cpp-6.1.0
+#     PATCH msgpack.patch
+#     OPTIONS
+#         "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
+#         "MSGPACK_BUILD_EXAMPLES OFF"
+#         "MSGPACK_BUILD_TESTS OFF"
+#         "MSGPACK_BUILD_DOCS OFF"
+#         "MSGPACK_ENABLE_CXX ON"
+#         "MSGPACK_USE_BOOST OFF"
+#         "MSGPACK_BUILD_HEADER_ONLY ON"
+#         "MSGPACK_ENABLE_SHARED OFF"
+#         "MSGPACK_ENABLE_STATIC OFF"
+#         "MSGPACK_CXX20 ON"
+#         "MSGPACK_NO_BOOST ON"
+# )
+
+CPMAddPackage(
+    NAME tokenizers-cpp
+    GITHUB_REPOSITORY mlc-ai/tokenizers-cpp
+    GIT_TAG 5de6f656c06da557d4f0fb1ca611b16d6e9ff11d
+    PATCH tokenizers-cpp.patch
+    OPTIONS
+        "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
+)
+# gersemi: on
+
+####################################################################################################################
+# spdlog
+####################################################################################################################
+
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME spdlog-dev)
+CPMAddPackage(
+    NAME spdlog
+    GITHUB_REPOSITORY gabime/spdlog
+    VERSION 1.15.2
+    OPTIONS
+        "CMAKE_MESSAGE_LOG_LEVEL NOTICE"
+        "SPDLOG_FMT_EXTERNAL_HO ON"
+        "SPDLOG_INSTALL ON"
+)
+set(CMAKE_INSTALL_DEFAULT_COMPONENT_NAME ${DEFAULT_COMPONENT_NAME})
+
+####################################################################################################################
+# tt-logger
+####################################################################################################################
+CPMAddPackage(
+    NAME tt-logger
+    GITHUB_REPOSITORY tenstorrent/tt-logger
+    VERSION 1.1.4
+    OPTIONS
+        "TT_LOGGER_INSTALL ON"
+        "TT_LOGGER_BUILD_TESTING OFF"
+)
