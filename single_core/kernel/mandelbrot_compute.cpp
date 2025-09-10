@@ -8,11 +8,11 @@
 
 #ifdef TRISC_MATH
 #define ITERATIONS (8)
-inline void mandelbrot(const uint dst_offset) {
+inline void mandelbrot(const uint dst_index_in0, const uint dst_index_in1, const uint dst_index_out) {
   constexpr uint dst_tile_size = 32;
   for(int _=0;_<ITERATIONS;_++) {
-    vFloat real = dst_reg[0];
-    vFloat imag = dst_reg[dst_offset * dst_tile_size];
+    vFloat real = dst_reg[dst_index_in0];
+    vFloat imag = dst_reg[dst_index_in1];
     vFloat zx = real;
     vFloat zy = imag;
     vFloat count = 0;
@@ -27,7 +27,7 @@ inline void mandelbrot(const uint dst_offset) {
       }
       v_endif;
     }
-    dst_reg[0] = count;
+    dst_reg[dst_index_out] = count;
     dst_reg++;
   }
 }

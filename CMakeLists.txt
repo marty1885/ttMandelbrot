@@ -46,6 +46,21 @@ target_include_directories(ttmetal INTERFACE
     $ENV{TT_METAL_HOME}/tt_stl/
 )
 
+# Add reflect include directory (header-only library)
+if(reflect_ADDED)
+    target_include_directories(ttmetal INTERFACE ${reflect_SOURCE_DIR})
+else()
+    message(WARNING "reflect package not found, using fallback path")
+    file(GLOB REFLECT_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/.cpmcache/reflect/*/")
+    foreach(REFLECT_DIR ${REFLECT_DIRS})
+        if(IS_DIRECTORY ${REFLECT_DIR} AND EXISTS "${REFLECT_DIR}/reflect")
+            target_include_directories(ttmetal INTERFACE ${REFLECT_DIR})
+            message(STATUS "Using reflect from: ${REFLECT_DIR}")
+            break()
+        endif()
+    endforeach()
+endif()
+
 target_link_directories(ttmetal INTERFACE
     $ENV{TT_METAL_HOME}/build/tt_metal
 )
@@ -55,6 +70,9 @@ target_link_libraries(ttmetal INTERFACE
     yaml-cpp
     Boost::core
     Boost::container
+    nlohmann_json::nlohmann_json
+    enchantum
+    tt-logger
     tt_metal
 )
 
