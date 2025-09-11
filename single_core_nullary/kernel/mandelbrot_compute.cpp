@@ -9,7 +9,9 @@
 #ifdef TRISC_MATH
 inline void mandelbrot(float y_coord, float left, float right) {
     math::set_dst_write_addr<DstTileLayout::Default, DstTileShape::Tile32x32>(0);
+#ifdef ARCH_WORMHOLE
     math::set_addr_mod_base();
+#endif
     TTI_STALLWAIT(p_stall::STALL_SFPU, p_stall::MATH);
 
     float lane_delta = (right - left) / 1024.f;
@@ -72,7 +74,9 @@ inline void mandelbrot(float y_coord, float left, float right) {
 
     math::clear_dst_reg_addr();
     TTI_STALLWAIT(p_stall::STALL_CFG, p_stall::WAIT_SFPU);
+#ifdef ARCH_WORMHOLE
     math::clear_addr_mod_base();
+#endif
 }
 
 #endif
