@@ -1,6 +1,6 @@
 # ttMandelbrot - Mandelbrot Set renderer using Tenstorrent hardware
 
-This program has only been tested on Tenstorrent Wormhole. It WILL NOT work on Grayskull and may not work on Blackhole.
+This program has only been tested on Tenstorrent Wormhole. It WILL NOT work on Grayskull. Tested on Wormhole and Blackhole.
 
 ## Build and use
 
